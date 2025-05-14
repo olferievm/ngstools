@@ -13,6 +13,11 @@ tpm <- function(y, log = TRUE, prior = 2) {
     stop("DGEList object must include a 'genes$length' column matching the number of genes.")
   }
   
+  # Check for zero or NA gene lengths
+  if (any(y$genes$length == 0 | is.na(y$genes$length))) {
+    stop("Gene lengths must be non-zero and non-missing.")
+  }
+  
   # Compute Reads Per Kilobase (RPK)
   rpk <- y$counts / y$genes$length
   
