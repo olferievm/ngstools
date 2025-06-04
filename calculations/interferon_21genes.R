@@ -1,16 +1,16 @@
 #' Calculate interferon score from expression matrix or edgeR object
 #'
 #'
-#'
-#'
-#'
 #' @param x A matrix of CPM values with gene names as rownames, or an edgeR::DGEList object.
 #' @param controls A vector of column indices (or logicals) identifying control samples.
 #'
 #' @return A numeric vector of interferon scores, one per sample.
 #' @import edgeR
 #' @export
-
+#' 
+#' 
+#' @references Yao, Y., Higgs, B. W., Morehouse, C., de los Reyes, M., Trigona, W., Brohawn, P., White, W., Zhang, J., White, B., Coyle, A. J., Kiener, P. A., & Jallal, B. (2009). Development of Potential Pharmacodynamic and Diagnostic Markers for Anti-IFN-α Monoclonal Antibody Trials in Systemic Lupus Erythematosus. Human Genomics and Proteomics, 1(1). https://doi.org/10.4061/2009/374312
+#'
 
 interferon_21genes <- function(x, controls = 1) {
   requireNamespace("edgeR", quietly = TRUE)
