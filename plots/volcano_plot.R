@@ -96,7 +96,7 @@ volcano_plot <- function(top,
   if (label) {
     g <- g + ggrepel::geom_text_repel(
       data = topnames,
-      aes_string(label = label_column),
+      aes(label = !!sym(label_column)),
       max.overlaps = max.overlaps,
       color = "blue",
       size = label_size,

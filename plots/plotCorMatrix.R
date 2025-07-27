@@ -33,7 +33,7 @@ plotCorMatrix <- function(x, p,
                           col_palette = NULL,
                           text.size = 3, 
                           axis.text.size = 10, 
-                          text.color = 'gold', 
+                          text.color = 'green', 
                           label.precision = 3, 
                           label.threshold = 0.05, 
                           reorder.rows = TRUE,
@@ -52,14 +52,19 @@ plotCorMatrix <- function(x, p,
                      "#FDCC8A", "#FC8D59", "#D7301F", "#C11C38", "#b01919")
   }
   
+  pcut <- 10^(-label.precision)
   # --- Prepare data ---
   df_x <- reshape2::melt(x, varnames = c("cluster", "group"), value.name = "value")
   df_p <- reshape2::melt(p, varnames = c("cluster", "group"), value.name = "label")
   df <- dplyr::left_join(df_x, df_p, by = c("cluster", "group")) %>%
     dplyr::mutate(
-      label = round(label, label.precision),
-      label = ifelse(label > label.threshold, NA, label)
-    )
+      labelm = case_when(
+        is.na(label) ~ "",
+        label < label.threshold & label >= pcut ~ as.character(round(label, label.precision)),
+        label < label.threshold & label < pcut ~ sprintf("< %s", pcut),
+        label > label.threshold ~ "",
+        TRUE ~ ""
+    ))
   
   # --- Reorder rows/columns if needed ---
   if (reorder.rows && nrow(x) > 1) {
@@ -72,9 +77,9 @@ plotCorMatrix <- function(x, p,
   }
   
   # --- Heatmap plot ---
-  g <- ggplot(df, aes(x = group, y = cluster, fill = value, label = label)) +
+  g <- ggplot(df, aes(x = group, y = cluster, fill = value, label = labelm)) +
     geom_tile() +
-    geom_text(data = dplyr::filter(df, !is.na(label)), 
+    geom_text(data = dplyr::filter(df, !is.na(labelm), labelm != ""), 
               size = text.size, color = text.color) +
     scale_fill_gradientn(
       colours = col_palette,
