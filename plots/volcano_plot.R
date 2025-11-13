@@ -43,6 +43,7 @@ volcano_plot <- function(top,
                          max.overlaps = 10,
                          pval_colname = "PValue",
                          adjpval_colname = "FDR",
+                         smallestpval = 1e-15,
                          logFC_colname = "logFC",
                          label_column = "gene_name",
                          color_scale = c("black", "orange"),
@@ -87,6 +88,12 @@ volcano_plot <- function(top,
   if (!is.character(color_scale) || length(color_scale) != 2) {
     stop("color_scale must be a character vector of length 2.")
   }
+  
+  # Pvalue and FDR can't be 0. Should be adjusted to smallest.
+  top <- top %>% dplyr::mutate(
+    PValue = pmax(PValue, smallestpval),
+    FDR = pmax(FDR, smallestpval),
+  )
   
   # Axis limits
   if (is.character(xlim) && xlim == "auto") {
