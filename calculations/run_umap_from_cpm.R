@@ -16,7 +16,9 @@
 #'
 #' @param min_dist Numeric. Controls compactness of UMAP clusters  
 #'   (lower = tighter clusters). Default = 0.3.
-#'
+#'   
+#' @param to_log Boolean. TRUE if CPM value should be log trnaformed.
+#'   
 #' @param seed Integer. Random seed for reproducible PCA/UMAP results.  
 #'   Default = 123.
 #'
@@ -45,7 +47,7 @@
 #' @export
 #' 
 
-run_umap_from_cpm <- function(cpm_mat, n_pcs = 15, n_neighbors = 30, min_dist = 0.3,
+run_umap_from_cpm <- function(cpm_mat, n_pcs = 15, n_neighbors = 30, min_dist = 0.3, to_log = FALSE,
                               seed = 123) {
   set.seed(seed)
 
@@ -60,10 +62,11 @@ run_umap_from_cpm <- function(cpm_mat, n_pcs = 15, n_neighbors = 30, min_dist = 
   }
   
   # Log-transform CPM values
-  log_cpm <- log2(cpm_mat + 1)
-  
+  if(to_log){
+    cpm_mat <- log2(cpm_mat + 1)
+  }
   ## ---- PCA ----
-  pca <- prcomp(log_cpm, center = TRUE, scale. = TRUE)
+  pca <- prcomp(cpm_mat, center = TRUE, scale. = TRUE)
   
   # Select first n PCs (recommended 10–15)
   pcs <- pca$x[, 1:n_pcs, drop = FALSE]
@@ -74,7 +77,7 @@ run_umap_from_cpm <- function(cpm_mat, n_pcs = 15, n_neighbors = 30, min_dist = 
     n_neighbors = n_neighbors,
     min_dist = min_dist,
     metric = "euclidean",
-    n_threads = 4,
+    n_threads = 8,
     ret_model = FALSE
   )
   
