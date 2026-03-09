@@ -16,11 +16,13 @@ interferon_21genes <- function(x, controls = 1) {
   requireNamespace("edgeR", quietly = TRUE)
   
   # Define the 21 interferon-stimulated genes
+  # Note: LAMP3 was excluded as TNF induced gene
+  # Note: SPATS2L was excluded based on PCA analysis
   interferon_genes <- c(
-    "SPATS2L", "ISG15", "IFIT1", "IFIT2", "IFIT3",
+    "ISG15", "IFIT1", "IFIT2", "IFIT3",
     "RSAD2", "HERC5", "IFI44", "CMPK2", "IFI6", 
     "OAS1", "OAS2", "OASL", "OAS3", "MX1",
-    "EPSTI1", "LY6E", "HERC6", "LAMP3", "IFI27", "OTOF"
+    "EPSTI1", "LY6E", "HERC6", "IFI27", "OTOF"
   )
   
   if (inherits(x, "DGEList")) {

@@ -4,9 +4,9 @@ chromosome_names_refseq_to_ucsc <- function(x) {
   
   x <- case_when(
     # assign PAR region genes to chrX
-    x == "NC_000023.11;NC_000024.10" ~ "chrX",
-    x == "NC_000023.11" ~ "chrY",
-    x == "NC_000024.10" ~ "chrX",
+    x == "NC_000023.11;NC_000024.10" ~ "chrX_chrY",
+    x == "NC_000023.11" ~ "chrX",
+    x == "NC_000024.10" ~ "chrY",
     x == "NC_012920.1" ~ "chrM",
     TRUE ~ x
   )

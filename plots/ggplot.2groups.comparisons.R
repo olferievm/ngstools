@@ -1,9 +1,139 @@
+#' Boxplot comparison of two groups across multiple categories
+#'
+#' Generate a ggplot2 boxplot with jittered observations and statistical
+#' comparisons between two groups performed independently within each category.
+#' The function performs either a Wilcoxon rank-sum test or Student's t-test
+#' for each category, adjusts p-values using the Benjamini–Hochberg procedure,
+#' and displays significance brackets on the plot.
+#'
+#' Optionally, the function can return only the calculated statistics table
+#' without generating a plot, or use externally supplied p-values (e.g.
+#' moderated statistics from limma).
+#'
+#' @param x A data.frame containing the variables to be plotted.
+#'
+#' @param name Character string specifying the numeric outcome variable.
+#'
+#' @param categories Character string specifying the categorical variable
+#' defining the x-axis categories. Each category will be tested independently.
+#'
+#' @param groups Character string specifying the grouping variable. Must have
+#' exactly two levels.
+#'
+#' @param test Statistical test used for comparisons. Either `"wilcox"`
+#' (Wilcoxon rank-sum test) or `"t_test"` (Student's t-test).
+#'
+#' @param only_signifs Logical. If `TRUE`, the function returns the table of
+#' calculated statistics and does not generate a plot.
+#'
+#' @param manual_signifs Optional data.frame containing externally calculated
+#' significance values. Must contain the same column name as `categories`
+#' and the columns `p`, `p.adj`, and `p.adj.signif`. When provided, these
+#' values replace internally computed statistics.
+#'
+#' @param xlab Optional x-axis label.
+#'
+#' @param ylab Optional y-axis label.
+#'
+#' @param legend.color Legend title for point colors.
+#'
+#' @param legend.fill Legend title for boxplot fill colors.
+#'
+#' @param point.colors Vector of colors used for points corresponding to
+#' the levels of `groups`.
+#'
+#' @param point.opacity Numeric transparency value for jittered points.
+#'
+#' @param point.size Numeric size of jittered points.
+#'
+#' @param jitter.width Width of horizontal jitter applied to points.
+#'
+#' @param dodge.width Dodge width used to separate the two groups.
+#'
+#' @param fill.colors Vector of fill colors for boxplots corresponding to
+#' the levels of `groups`.
+#'
+#' @param staplewidth Width of boxplot staples.
+#'
+#' @param keep.nonsignif Logical. If `FALSE`, comparisons with non-significant
+#' adjusted p-values (`p.adj.signif == "ns"`) are removed from the plot.
+#'
+#' @param bracket.size Line width of significance brackets.
+#'
+#' @param tip.length Length of bracket tips.
+#'
+#' @param coord_flip Logical. If `TRUE`, the coordinate system is flipped
+#' for horizontal boxplots.
+#'
+#' @param verbose Logical. If `TRUE`, status messages are printed during
+#' execution.
+#'
+#' @return
+#' If `only_signifs = TRUE`, returns a data.frame containing statistical test
+#' results with adjusted p-values and plotting coordinates. Otherwise returns
+#' a `ggplot` object.
+#'
+#' @details
+#' For each level of `categories`, the function compares the two levels of
+#' `groups` using the specified statistical test. P-values are adjusted
+#' using the Benjamini–Hochberg method to control the false discovery rate.
+#'
+#' Significance brackets are added using `ggprism::add_pvalue`, with
+#' positions automatically calculated based on category index and maximum
+#' observed value.
+#'
+#' @examples
+#' 
+#' \dontrun{ 
+#' set.seed(1)
+#' 
+#' df <- data.frame(
+#'   category = rep(c("A","B","C"), each = 40),
+#'   group = rep(rep(c("ctrl","case"), each = 20), 3),
+#'   value = rnorm(120) + rep(c(0,0.5,1), each=40)
+#' )
+#' 
+#' ggplot.2groups.comparisons(
+#'   x = df,
+#'   name = "value",
+#'   categories = "category",
+#'   groups = "group"
+#' )
+#' }
+#' 
+#' \dontrun{
+#' ggplot.2groups.comparisons(
+#'   x = df,
+#'   name = "expression",
+#'   categories = "celltype",
+#'   groups = "condition",
+#'   test = "wilcox",
+#'   fill.colors = c("#1B9E77", "#D95F02"),
+#'   point.colors = c("#1B9E77", "#D95F02"),
+#'   xlab = "Cell type",
+#'   ylab = "Expression"
+#' )
+#' }
+#'
+#' @import ggplot2
+#' @import dplyr
+#' @import rstatix
+#' @import ggprism
+#' @import tibble
+#'
+#' @export
+
+
+
+
 ggplot.2groups.comparisons <- function(
     x,
     name,                  # numeric outcome column
     categories,            # x-axis factor column
     groups,                # 2-level grouping column
-    test = c("wilcox", "t_test"),
+    test = c("wilcox", "t_test"), # which test to use
+    only_signifs = FALSE, # if TRUE do not produce plot but return significance table
+    manual_signifs = NULL, # a user provided data.frame of match significance (e.g. limma moderated test) with the same column name as categories and columns: p, p.adj, and p.adj.signif
     xlab = NULL,
     ylab = NULL,
     legend.color = NULL,
@@ -18,7 +148,8 @@ ggplot.2groups.comparisons <- function(
     keep.nonsignif = FALSE,
     bracket.size = 0.3,
     tip.length = 0.01,
-    coord_flip = TRUE
+    coord_flip = TRUE,
+    verbose = FALSE
 ){
   
   test <- match.arg(test)
@@ -64,9 +195,26 @@ ggplot.2groups.comparisons <- function(
     )
   
   stat.test <- dplyr::left_join(stat.test, y.df, by = categories)
+  if(verbose){cat('statistics was calculated\n')}
+  # Return only calculated significance table.
+  if(only_signifs){
+    if(verbose){cat('return only statistics\n')}
+    return(stat.test)}
   
-  if (!keep.nonsignif)
+  #
+  if(!is.null(manual_signifs)){
+    if(length(intersect(colnames(manual_signifs),c(categories,"p", "p.adj", "p.adj.signif")))==4){
+      stat.test <- stat.test %>%
+          dplyr::select(-p, -p.adj, -p.adj.signif) %>%
+          dplyr::left_join(., limma.pvals, by = categories, unmatched = "drop", keep = FALSE)
+      if(verbose){cat('substitute statistics with manual entry\n')}
+    }
+  }
+  
+  if (!keep.nonsignif){
     stat.test <- dplyr::filter(stat.test, p.adj.signif != "ns")
+    if(verbose){cat('removed non-significant values\n')}
+  }
   
   ## ---- plot ----
   g <- ggplot2::ggplot(x, ggplot2::aes(.data[[categories]], .data[[name]])) +
@@ -112,3 +260,4 @@ ggplot.2groups.comparisons <- function(
   
   g
 }
+
