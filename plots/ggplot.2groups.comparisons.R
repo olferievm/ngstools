@@ -157,35 +157,35 @@ ggplot.2groups.comparisons <- function(
   ## ---- enforce factors ----
   x[[categories]] <- factor(x[[categories]])
   x[[groups]]     <- factor(x[[groups]])
-  
+  #cat('1...\n')
   if (nlevels(x[[groups]]) != 2)
     stop("groups must have exactly two levels")
-  
+  #cat('2...\n')
   ## ---- statistical test per category ----
   stat.test <- dplyr::group_by(x, .data[[categories]])
-  
+  #cat('3...\n')
   stat.test <- switch(
     test,
-    wilcox = rstatix::wilcox_test(stat.test, as.formula(paste(name, "~", groups))),
-    t_test = rstatix::t_test(stat.test,     as.formula(paste(name, "~", groups)))
+    wilcox = rstatix::wilcox_test(stat.test, as.formula(paste0("`", name, "` ~ `", groups, "`"))),
+    t_test = rstatix::t_test(stat.test,  as.formula(paste0("`", name, "` ~ `", groups, "`")))
   )
-  
+  #cat('4...\n')
   stat.test <- stat.test |>
     rstatix::adjust_pvalue(method = "BH") |>
     rstatix::add_significance("p.adj")
-  
+  #cat('5...\n')
   ## ---- compute numeric x positions for brackets ----
   lvl_map <- tibble::tibble(
     !!categories := levels(x[[categories]]),
     xnum = seq_along(levels(x[[categories]]))
   )
-  
+  #cat('6...\n')
   stat.test <- dplyr::left_join(stat.test, lvl_map, by = categories) |>
     dplyr::mutate(
       xmin = xnum - dodge.width/2,
       xmax = xnum + dodge.width/2
     )
-  
+  #cat('7...\n')
   ## ---- y positions (top of each panel) ----
   y.df <- x |>
     dplyr::group_by(.data[[categories]]) |>
@@ -193,29 +193,29 @@ ggplot.2groups.comparisons <- function(
       y.position = max(.data[[name]], na.rm = TRUE) * 1.08,
       .groups = "drop"
     )
-  
+  #cat('8...\n')
   stat.test <- dplyr::left_join(stat.test, y.df, by = categories)
   if(verbose){cat('statistics was calculated\n')}
   # Return only calculated significance table.
   if(only_signifs){
     if(verbose){cat('return only statistics\n')}
     return(stat.test)}
-  
+  #cat('9...\n')
   #
   if(!is.null(manual_signifs)){
     if(length(intersect(colnames(manual_signifs),c(categories,"p", "p.adj", "p.adj.signif")))==4){
       stat.test <- stat.test %>%
           dplyr::select(-p, -p.adj, -p.adj.signif) %>%
-          dplyr::left_join(., limma.pvals, by = categories, unmatched = "drop", keep = FALSE)
+          dplyr::left_join(., manual_signifs, by = categories, unmatched = "drop", keep = FALSE)
       if(verbose){cat('substitute statistics with manual entry\n')}
     }
   }
-  
+  #cat('10...\n')
   if (!keep.nonsignif){
     stat.test <- dplyr::filter(stat.test, p.adj.signif != "ns")
     if(verbose){cat('removed non-significant values\n')}
   }
-  
+  #cat('11...\n')
   ## ---- plot ----
   g <- ggplot2::ggplot(x, ggplot2::aes(.data[[categories]], .data[[name]])) +
     ggplot2::geom_boxplot(
@@ -235,7 +235,7 @@ ggplot.2groups.comparisons <- function(
     ) +
     ggplot2::scale_fill_manual(values = fill.colors, name = legend.fill) +
     ggplot2::scale_color_manual(values = point.colors, name = legend.color)
-  
+  #cat('12...\n')
   if (coord_flip)
     g <- g + ggplot2::coord_flip()
   
@@ -249,7 +249,7 @@ ggplot.2groups.comparisons <- function(
       bracket.size = bracket.size,
       tip.length = tip.length
     )
-  
+  #cat('13...\n')
   if(!is.null(xlab)){
     g <- g + xlab(xlab)
   }
@@ -257,7 +257,7 @@ ggplot.2groups.comparisons <- function(
   if(!is.null(ylab)){
     g <- g + ylab(ylab)
   }
-  
+  #cat('14...\n')
   g
 }
 
