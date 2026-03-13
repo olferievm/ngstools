@@ -30,6 +30,12 @@ setColorPaletteForProject <- function() {
       brown  = "#A65628",
       pink   = "#F781BF"
     ),
+    set4Group = c(
+      green ="#4DAF4A",
+      blue = "#377EB8",
+      orange = "#FF7F00",
+      red = "#E41A1C"
+    ),
     grPal = c(
       deepblue  = "#225EA8",
       skyblue   = "#74A9CF",
