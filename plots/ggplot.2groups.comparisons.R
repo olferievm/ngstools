@@ -38,6 +38,8 @@
 #' @param legend.color Legend title for point colors.
 #'
 #' @param legend.fill Legend title for boxplot fill colors.
+#' 
+#' @param color.factor name column that can be used to color points (if null the column matching groups will be used)
 #'
 #' @param point.colors Vector of colors used for points corresponding to
 #' the levels of `groups`.
@@ -56,7 +58,11 @@
 #' @param staplewidth Width of boxplot staples.
 #'
 #' @param keep.nonsignif Logical. If `FALSE`, comparisons with non-significant
-#' adjusted p-values (`p.adj.signif == "ns"`) are removed from the plot.
+#' adjusted p-values are removed from the plot based on treshold.signif and treshold.logFC cutoff.
+#'
+#' @param treshold.signif = 0.05  cut off value for adjusted p-values 
+#' 
+#' @param treshold.logFC = 1 cut off value for logFC
 #'
 #' @param bracket.size Line width of significance brackets.
 #'
@@ -134,10 +140,14 @@ ggplot.2groups.comparisons <- function(
     test = c("wilcox", "t_test"), # which test to use
     only_signifs = FALSE, # if TRUE do not produce plot but return significance table
     manual_signifs = NULL, # a user provided data.frame of match significance (e.g. limma moderated test) with the same column name as categories and columns: p, p.adj, and p.adj.signif
+    keep.nonsignif = FALSE,
+    treshold.signif = 0.05,
+    treshold.logFC = 1,
     xlab = NULL,
     ylab = NULL,
     legend.color = NULL,
     legend.fill  = NULL,
+    color.factor = NULL,
     point.colors = NULL,
     point.opacity = 0.5,
     point.size = 1,
@@ -145,7 +155,6 @@ ggplot.2groups.comparisons <- function(
     dodge.width = 0.8,
     fill.colors = NULL,
     staplewidth = 0.25,
-    keep.nonsignif = FALSE,
     bracket.size = 0.3,
     tip.length = 0.01,
     coord_flip = TRUE,
@@ -154,15 +163,51 @@ ggplot.2groups.comparisons <- function(
   
   test <- match.arg(test)
   
-  ## ---- enforce factors ----
-  x[[categories]] <- factor(x[[categories]])
-  x[[groups]]     <- factor(x[[groups]])
-  #cat('1...\n')
-  if (nlevels(x[[groups]]) != 2)
+  if(all(colnames(x) != categories)){stop('Lack column ', categories)}
+  if(all(colnames(x) != groups)){stop('Lack column ', groups)}
+  
+  ## ---- enforce factor ----
+  if(!is.factor(x[[categories]])){
+         x[[categories]] <- factor(x[[categories]])}
+  ## ---- enforce factor ----
+  if(!is.factor(x[[groups]])){
+         x[[groups]] <- factor(x[[groups]])}
+  
+  l <- levels(x[[groups]])
+  
+  if(verbose){cat('Provided levels: ',l,'\n')}
+  
+  if (length(l) != 2)
     stop("groups must have exactly two levels")
-  #cat('2...\n')
+  
+  ## ---- test color.factor ----
+  if(is.null(color.factor)){color.factor <- groups}
+  
+  # --- Test color.factor column
+  if(all(colnames(x) != color.factor)){stop('Lack column ', color.factor)}
+  
+  ## ---- enforce factor ----
+  if(!is.factor(x[[color.factor]])){
+         x[[color.factor]] <- factor(x[[color.factor]])}
+  
   ## ---- statistical test per category ----
   stat.test <- dplyr::group_by(x, .data[[categories]])
+  
+  ## ---- fold change between groups ----
+  fc <- tmp %>% 
+    dplyr::group_by(!!sym(categories), !!sym(group)) %>%
+    dplyr::summarise(
+      average = mean(!!sym(name), na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    tidyr::pivot_wider(
+      id_cols = all_of(categories),
+      names_from = all_of(group),
+      values_from = average
+    ) %>%
+    dplyr::mutate(
+      logFC = !!sym(l[2]) - !!sym(l[1])
+    )
   #cat('3...\n')
   stat.test <- switch(
     test,
@@ -174,6 +219,7 @@ ggplot.2groups.comparisons <- function(
     rstatix::adjust_pvalue(method = "BH") |>
     rstatix::add_significance("p.adj")
   #cat('5...\n')
+
   ## ---- compute numeric x positions for brackets ----
   lvl_map <- tibble::tibble(
     !!categories := levels(x[[categories]]),
@@ -195,24 +241,30 @@ ggplot.2groups.comparisons <- function(
     )
   #cat('8...\n')
   stat.test <- dplyr::left_join(stat.test, y.df, by = categories)
+  
+  stat.test <- dplyr::left_join(stat.test, fc, by = categories)
+  
   if(verbose){cat('statistics was calculated\n')}
-  # Return only calculated significance table.
-  if(only_signifs){
-    if(verbose){cat('return only statistics\n')}
-    return(stat.test)}
+
   #cat('9...\n')
   #
   if(!is.null(manual_signifs)){
     if(length(intersect(colnames(manual_signifs),c(categories,"p", "p.adj", "p.adj.signif")))==4){
       stat.test <- stat.test %>%
-          dplyr::select(-p, -p.adj, -p.adj.signif) %>%
+          dplyr::select(-p, -p.adj, -p.adj.signif, -logFC) %>%
           dplyr::left_join(., manual_signifs, by = categories, unmatched = "drop", keep = FALSE)
       if(verbose){cat('substitute statistics with manual entry\n')}
     }
   }
+  
+  # Return only calculated significance table.
+  if(only_signifs){
+    if(verbose){cat('return only statistics\n')}
+    return(stat.test)}
+  
   #cat('10...\n')
   if (!keep.nonsignif){
-    stat.test <- dplyr::filter(stat.test, p.adj.signif != "ns")
+    stat.test <- dplyr::filter(stat.test, p.adj < treshold.signif, abs(logFC) > treshold.logFC)
     if(verbose){cat('removed non-significant values\n')}
   }
   #cat('11...\n')
@@ -225,19 +277,24 @@ ggplot.2groups.comparisons <- function(
       staplewidth = staplewidth
     ) +
     ggplot2::geom_jitter(
-      ggplot2::aes(color = .data[[groups]]),
+      ggplot2::aes(group = .data[[groups]], 
+                   color = .data[[color.factor]]),
       alpha = point.opacity,
       size = point.size,
       position = ggplot2::position_jitterdodge(
         jitter.width = jitter.width,
         dodge.width  = dodge.width
       )
-    ) +
-    ggplot2::scale_fill_manual(values = fill.colors, name = legend.fill) +
-    ggplot2::scale_color_manual(values = point.colors, name = legend.color)
+    )
+  
+  if(!is.null(fill.colors)){
+   g <- g + ggplot2::scale_fill_manual(values = fill.colors, name = legend.fill)}
+  
+  if(!is.null(point.colors)){
+    g <- g + ggplot2::scale_color_manual(values = point.colors, name = legend.color)}
   #cat('12...\n')
-  if (coord_flip)
-    g <- g + ggplot2::coord_flip()
+  if(coord_flip){
+    g <- g + ggplot2::coord_flip()}
   
   g <- g +
     ggprism::add_pvalue(

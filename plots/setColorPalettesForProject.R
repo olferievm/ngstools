@@ -45,8 +45,17 @@ setColorPaletteForProject <- function() {
       blue   = "#011993"
     ),
     myBlWtYl = c(
-      "#0803A1", "#1514A6", "#225EA8", "#74A9CF", "#BDC9E1",
-      "#F1EEF6", "#FDCC8A", "#FC8D59", "#D7301F", "#C11C38", "#b01919"
+      blue1 = "#0803A1",
+      blue2 = "#1514A6",
+      blue3 = "#225EA8",
+      blue4 = "#74A9CF",
+      gray1 = "#BDC9E1",
+      gray2 = "#F1EEF6",
+      yellow1 = "#FDCC8A",
+      orange1 = "#FC8D59",
+      orange2 = "#D7301F",
+      red1 = "#C11C38",
+      red2 = "#b01919"
     ),
     jco = c(
       blue       = "#0073C2",
@@ -59,7 +68,29 @@ setColorPaletteForProject <- function() {
       darkgray   = "#3B3B3B",
       darkred    = "#A73030",
       slateblue  = "#4A6990"
-    )
+    ),
+    descr_BlOr = c(
+      blue = "#377EB8",
+      orange = "#FF7F00"),
+    descr_NavyRed = c(
+      navy = "navy",
+      darkred = "darkred"),
+    gr2ColBlRd = c(
+      navy = '#172767',
+      red = "#b80422"),
+    gr3ColBlYlRd = c(
+      navy = '#172767',
+      orange = "#ee9b43",
+      red = "#b80422"),
+    grExterCol <-c(
+      yellow1 = "#ffec9d",
+      yellow2 = "#fac881",
+      yellow3 = "#f4a464",
+      orange1 = "#e87444",
+      orange2 = "#d9402a",
+      red1 = "#bf2729",
+      red2 = "#912534",
+      red3 = "#64243e")
   )
   return(palettes)
 }
