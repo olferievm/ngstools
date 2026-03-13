@@ -88,7 +88,7 @@ setColorPaletteForProject <- function() {
       navy = '#172767',
       orange = "#ee9b43",
       red = "#b80422"),
-    grExterCol <-c(
+    grExterCol = c(
       yellow1 = "#ffec9d",
       yellow2 = "#fac881",
       yellow3 = "#f4a464",
