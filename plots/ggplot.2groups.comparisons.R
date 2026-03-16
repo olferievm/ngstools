@@ -195,14 +195,14 @@ ggplot.2groups.comparisons <- function(
   
   ## ---- fold change between groups ----
   fc <- tmp %>% 
-    dplyr::group_by(!!sym(categories), !!sym(group)) %>%
+    dplyr::group_by(!!sym(categories), !!sym(groups)) %>%
     dplyr::summarise(
       average = mean(!!sym(name), na.rm = TRUE),
       .groups = "drop"
     ) %>%
     tidyr::pivot_wider(
       id_cols = all_of(categories),
-      names_from = all_of(group),
+      names_from = all_of(groups),
       values_from = average
     ) %>%
     dplyr::mutate(
