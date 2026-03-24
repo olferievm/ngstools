@@ -36,7 +36,8 @@ TNF_genes_score <- function(x, controls = 1) {
   # See above how the list was generated
   tnf_genes <- c(
     "NFKBIE", "TNFAIP3", "BIRC3", "SLC2A6", "DUSP2", "IER5", "TAGAP", "LTB",
-    "TNFAIP8L2", "IRF8", "SP140", "PSME2", "KMO", "COTL1", "LPXN", "PTPN6"
+    "TNFAIP8L2", "IRF8", "SP140", "PSME2", "KMO", "COTL1", "LPXN", "PTPN6",
+    "IL6", "CXCL8", "CCL2", "ICAM1", "TRAF1"
   )
   
   if (inherits(x, "DGEList")) {

@@ -1,36 +1,33 @@
-#' Calculate interferon score from expression matrix or edgeR object
+#' Calculate score for genes know to be regulated by cell cycle G2M phase
 #'
 #'
 #' @param x A matrix of CPM values with gene names as rownames, or an edgeR::DGEList object.
 #' @param controls A vector of column indices (or logicals) identifying control samples.
 #'
-#' @return A numeric vector of interferon scores, one per sample.
+#' @return A numeric vector of G2M phase gene response scores, one per sample.
 #' @import edgeR
 #' @export
 #' 
+#' @note 
 #' 
-#' @references Yao, Y., Higgs, B. W., Morehouse, C., de los Reyes, M., Trigona, W., Brohawn, P., White, W., Zhang, J., White, B., Coyle, A. J., Kiener, P. A., & Jallal, B. (2009). Development of Potential Pharmacodynamic and Diagnostic Markers for Anti-IFN-α Monoclonal Antibody Trials in Systemic Lupus Erythematosus. Human Genomics and Proteomics, 1(1). https://doi.org/10.4061/2009/374312
-#'
+#' @references
 
-interferongamma_genes <- function(x, controls = 1) {
+g2m_phase_genes_score <- function(x, controls = 1) {
   requireNamespace("edgeR", quietly = TRUE)
   
-  # Define the 21 interferon-stimulated genes
-  interferon_genes <- c(
-    "CXCL1", "CXCL10", "CXCL11", "GBP1", "GBP2",
-    "IRF1", "STAT1", "IDO1", "CIITA", "IFI30"
-  )
+  # See above how the list was generated
+  selgenes <- c("HMGB2", "CDK1", "NUSAP1", "UBE2C", "BIRC5", "TPX2", "TOP2A", "NDC80", "CKS2", "NUF2", "CKS1B", "MKI67", "TMPO", "CENPF", "TACC3", "FAM64A", "SMC4", "CCNB2", "CKAP2L", "CKAP2", "AURKB", "BUB1", "KIF11", "ANP32E", "TUBB4B", "GTSE1", "KIF20B", "HJURP", "CDCA3", "HN1", "CDC20", "TTK", "CDC25C", "KIF2C", "RANGAP1", "NCAPD2", "DLGAP5", "CDCA2", "CDCA8", "ECT2", "KIF23", "HMMR", "AURKA", "PSRC1", "ANLN", "LBR", "CKAP5", "CENPE", "CTCF", "NEK2", "G2E3", "GAS2L3", "CBX5", "CENPA")
   
   if (inherits(x, "DGEList")) {
     if (!"gene_name" %in% colnames(x$genes)) {
       stop("DGEList must have a 'gene_name' column in x$genes.")
     }
     
-    matched_genes <- intersect(x$genes$gene_name, interferon_genes)
+    matched_genes <- intersect(x$genes$gene_name, selgenes)
     
-    if (length(matched_genes) == 0) stop("No interferon genes found. Abort.")
-    if (length(matched_genes) < 5) stop("Only ", length(matched_genes), " genes found. Abort.")
-    if (length(matched_genes) < 7) warning("NOTE: Found ", length(matched_genes), " genes.")
+    if (length(matched_genes) == 0) stop("No response genes found. Abort.")
+    if (length(matched_genes) < 10) stop("Only ", length(matched_genes), " genes found. Abort.")
+    if (length(matched_genes) < 21) warning("NOTE: Found ", length(matched_genes), " genes.")
     if (anyDuplicated(matched_genes)) stop("Duplicated gene names found. Abort.")
     
     gene_indices <- which(x$genes$gene_name %in% matched_genes)
@@ -44,11 +41,11 @@ interferongamma_genes <- function(x, controls = 1) {
     rownames(cpm_mat) <- gene_labels
     
   } else if (is.matrix(x)) {
-    matched_genes <- intersect(rownames(x), interferon_genes)
+    matched_genes <- intersect(rownames(x), selgenes)
     
-    if (length(matched_genes) == 0) stop("No interferon genes found. Abort.")
-    if (length(matched_genes) < 5) stop("Only ", length(matched_genes), " genes found. Abort.")
-    if (length(matched_genes) < 7) warning("NOTE: Found ", length(matched_genes), " genes.")
+    if (length(matched_genes) == 0) stop("No genes found. Abort.")
+    if (length(matched_genes) < 10) stop("Only ", length(matched_genes), " genes found. Abort.")
+    if (length(matched_genes) < 21) warning("NOTE: Found ", length(matched_genes), " genes.")
     
     cpm_mat <- x[matched_genes, , drop = FALSE]
   } else {
