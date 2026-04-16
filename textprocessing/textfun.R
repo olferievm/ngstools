@@ -14,6 +14,10 @@ keep_one <- function(x) {
   if (length(x)) x[[1]] else NA
 }
 
+# Summary table:
+# Calculate cases with AVN and AVE other adverse events based on all visit.
+#keep_one <- function(x){ if(all(is.na(x))){ return(NA)}
+#  unique(x[!is.na(x)])[1]}
 
 # Replace Excel string "N/A" with NA
 catch_wrong <- function(x) {

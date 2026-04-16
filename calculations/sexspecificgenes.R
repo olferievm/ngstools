@@ -107,9 +107,9 @@ sexspecificgenes <- function(x) {
    
    return(
      list(
-       male_gene_score = m_score,
-       female_gene_score = f_score,
-       sex_gene_score = sex_score
+       male_genes_score = m_score,
+       female_genes_score = f_score,
+       sex_genes_score = sex_score
      )
    )
 }

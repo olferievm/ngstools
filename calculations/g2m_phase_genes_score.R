@@ -16,7 +16,12 @@ g2m_phase_genes_score <- function(x, controls = 1) {
   requireNamespace("edgeR", quietly = TRUE)
   
   # See above how the list was generated
-  selgenes <- c("HMGB2", "CDK1", "NUSAP1", "UBE2C", "BIRC5", "TPX2", "TOP2A", "NDC80", "CKS2", "NUF2", "CKS1B", "MKI67", "TMPO", "CENPF", "TACC3", "FAM64A", "SMC4", "CCNB2", "CKAP2L", "CKAP2", "AURKB", "BUB1", "KIF11", "ANP32E", "TUBB4B", "GTSE1", "KIF20B", "HJURP", "CDCA3", "HN1", "CDC20", "TTK", "CDC25C", "KIF2C", "RANGAP1", "NCAPD2", "DLGAP5", "CDCA2", "CDCA8", "ECT2", "KIF23", "HMMR", "AURKA", "PSRC1", "ANLN", "LBR", "CKAP5", "CENPE", "CTCF", "NEK2", "G2E3", "GAS2L3", "CBX5", "CENPA")
+  selgenes <- c("HMGB2", "CDK1", "NUSAP1", "UBE2C", "BIRC5", "TPX2", "TOP2A", "NDC80", "CKS2",
+                "NUF2", "CKS1B", "MKI67", "TMPO", "CENPF", "TACC3", "FAM64A", "SMC4", "CCNB2",
+                "CKAP2L", "CKAP2", "AURKB", "BUB1", "KIF11", "ANP32E", "TUBB4B", "GTSE1", "KIF20B",
+                "HJURP", "CDCA3", "HN1", "CDC20", "TTK", "CDC25C", "KIF2C", "RANGAP1", "NCAPD2",
+                "DLGAP5", "CDCA2", "CDCA8", "ECT2", "KIF23", "HMMR", "AURKA", "PSRC1", "ANLN",
+                "LBR", "CKAP5", "CENPE", "CTCF", "NEK2", "G2E3", "GAS2L3", "CBX5", "CENPA")
   
   if (inherits(x, "DGEList")) {
     if (!"gene_name" %in% colnames(x$genes)) {
@@ -27,7 +32,7 @@ g2m_phase_genes_score <- function(x, controls = 1) {
     
     if (length(matched_genes) == 0) stop("No response genes found. Abort.")
     if (length(matched_genes) < 10) stop("Only ", length(matched_genes), " genes found. Abort.")
-    if (length(matched_genes) < 21) warning("NOTE: Found ", length(matched_genes), " genes.")
+    if (length(matched_genes) < 54) warning("NOTE: Found ", length(matched_genes), " genes.")
     if (anyDuplicated(matched_genes)) stop("Duplicated gene names found. Abort.")
     
     gene_indices <- which(x$genes$gene_name %in% matched_genes)
@@ -45,7 +50,7 @@ g2m_phase_genes_score <- function(x, controls = 1) {
     
     if (length(matched_genes) == 0) stop("No genes found. Abort.")
     if (length(matched_genes) < 10) stop("Only ", length(matched_genes), " genes found. Abort.")
-    if (length(matched_genes) < 21) warning("NOTE: Found ", length(matched_genes), " genes.")
+    if (length(matched_genes) < 54) warning("NOTE: Found ", length(matched_genes), " genes.")
     
     cpm_mat <- x[matched_genes, , drop = FALSE]
   } else {
@@ -53,13 +58,12 @@ g2m_phase_genes_score <- function(x, controls = 1) {
   }
   
   # Calculate control statistics
-  control_means <- rowMeans(cpm_mat[, controls, drop = FALSE])
-  control_sds   <- apply(cpm_mat[, controls, drop = FALSE], 1, sd)
+  # Need 2 genes
+  if(nrow(cpm_mat) > 1){
+    m_scaled <- scale(t(cpm_mat))
+    m_score <- rowMeans(m_scaled)
+    #hist(m_score, breaks = 100)
+  }
   
-  # Standardize expression: (x - mean) / sd
-  z_scores <- sweep(cpm_mat, 1, control_means, "-")
-  z_scores <- sweep(z_scores, 1, control_sds, "/")
-  
-  # Interferon score is the average Z-score per sample
-  colMeans(z_scores, na.rm = TRUE)
+  return(as.numeric(m_score))
 }
