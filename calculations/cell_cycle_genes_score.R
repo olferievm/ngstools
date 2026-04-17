@@ -94,8 +94,8 @@ cell_cycle_genes_score <- function(x, ref.genes = c("PBMC","Suerat")) {
     
     assoc <- data.frame(
       Component = c("Dim.1","Dim.2"),
-      S = c(score_set(s_genes2,"Dim.1"), score_set(s_genes2,"Dim.2")),
-      G2M = c(score_set(g2m_genes2,"Dim.1"), score_set(g2m_genes2,"Dim.2"))
+      S = c(score_set(s_genes,"Dim.1"), score_set(s_genes,"Dim.2")),
+      G2M = c(score_set(g2m_genes,"Dim.1"), score_set(g2m_genes,"Dim.2"))
     )
     
     S_comp  <- assoc$Component[which.max(assoc$S)]
