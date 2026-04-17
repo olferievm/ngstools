@@ -13,7 +13,7 @@
 
 s_phase_genes_score <- function(x) {
   requireNamespace("edgeR", quietly = TRUE)
-  x <- y
+
   # See above how the list was generated
   selgenes <- c(
     "MCM5", "PCNA", "TYMS", "FEN1", "MCM2", "MCM4", "RRM1", "UNG", "GINS2",
