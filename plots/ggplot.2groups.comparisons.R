@@ -158,6 +158,10 @@ ggplot.2groups.comparisons <- function(
     bracket.size = 0.3,
     tip.length = 0.01,
     coord_flip = TRUE,
+    reverse_x_labels = FALSE,
+    reverse_fill_group = FALSE,
+    title = "",
+    subtitle = "",
     verbose = FALSE
 ){
   
@@ -266,16 +270,32 @@ ggplot.2groups.comparisons <- function(
   if (!keep.nonsignif){
     stat.test <- dplyr::filter(stat.test, p.adj < treshold.signif, abs(logFC) > treshold.logFC)
     if(verbose){cat('removed non-significant values\n')}
+    if(verbose & nrow(stat.test) < 1){cat('No-significant parameter reach significance\n')}
   }
-  #cat('11...\n')
+
+  
   ## ---- plot ----
-  g <- ggplot2::ggplot(x, ggplot2::aes(.data[[categories]], .data[[name]])) +
-    ggplot2::geom_boxplot(
-      ggplot2::aes(fill = .data[[groups]]),
+  if(reverse_x_labels){
+    g <- ggplot2::ggplot(x, ggplot2::aes(forcats::fct_rev(.data[[categories]]), .data[[name]]))
+  }else{
+    g <- ggplot2::ggplot(x, ggplot2::aes(.data[[categories]], .data[[name]]))
+  }
+  
+  if(reverse_fill_group){
+    g <- g + ggplot2::geom_boxplot(
+      ggplot2::aes(fill = forcats::fct_rev(.data[[groups]])),
       position = ggplot2::position_dodge(width = dodge.width),
       outlier.shape = NA,
       staplewidth = staplewidth
-    ) +
+    )}else{
+      g <- g + ggplot2::geom_boxplot(
+        ggplot2::aes(fill = .data[[groups]]),
+        position = ggplot2::position_dodge(width = dodge.width),
+        outlier.shape = NA,
+        staplewidth = staplewidth)
+    }
+  
+  g <- g +
     ggplot2::geom_jitter(
       ggplot2::aes(group = .data[[groups]], 
                    color = .data[[color.factor]]),
@@ -296,6 +316,7 @@ ggplot.2groups.comparisons <- function(
   if(coord_flip){
     g <- g + ggplot2::coord_flip()}
   
+  if(nrow(stat.test)>0){
   g <- g +
     ggprism::add_pvalue(
       stat.test,
@@ -306,6 +327,7 @@ ggplot.2groups.comparisons <- function(
       bracket.size = bracket.size,
       tip.length = tip.length
     )
+  }
   #cat('13...\n')
   if(!is.null(xlab)){
     g <- g + xlab(xlab)
@@ -315,6 +337,12 @@ ggplot.2groups.comparisons <- function(
     g <- g + ylab(ylab)
   }
   #cat('14...\n')
+  if(!is.null(title)){
+    g <- g + ggplot2::labs(title = title)
+  }
+  if(!is.null(subtitle)){
+    g <- g + ggplot2::labs(subtitle = subtitle)
+  }
   g
 }
 
