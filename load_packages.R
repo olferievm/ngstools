@@ -23,7 +23,10 @@
 load_packages <- function(pkgs,
                               bioc_pkgs = NULL,
                               github_pkgs = NULL,
-                              quietly = TRUE) {
+                              quietly = TRUE,
+                              timeout = 1000) {
+  # Increase download timeout
+  options(timeout = timeout)
   # Install BiocManager if needed
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager")
