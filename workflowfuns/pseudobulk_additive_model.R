@@ -12,6 +12,7 @@
 #'   samples in rows and genes in columns.
 #' @param meta A data.frame containing one row per pseudobulk sample.
 #'   Row names must match \code{counts}.
+#' @param genes An optional data.frame with gene information and where all rownames equals colnames counts
 #' @param genotype Character scalar giving the name of the genotype column
 #'   in \code{meta}. The genotype can be coded as integer (e.g 0, 1, 2) or ordered factor (e.g GG, GC, CC). In case of allele analysis more levels is possible (e.g AA-GG, AA-GC, AC-GC, ...)
 #' @param cat_covariates Character vector of categorical covariates to
@@ -47,13 +48,14 @@
 #' @export
 #' 
 
-pseudobulk_additive_model <- function(counts, meta, genotype, cat_covariates = NULL, num_covariates = NULL, cell_column = "cell_type", cell_types = NULL, min_samples = 50, p_value_cutoff =1, logFC_cutoff=0){
+pseudobulk_additive_model <- function(counts, meta, genes=NULL, genotype, cat_covariates = NULL, num_covariates = NULL, cell_column = "cell_type", cell_types = NULL, min_samples = 50, p_value_cutoff =1, logFC_cutoff=0){
   
   stopifnot(is.matrix(counts) || is.data.frame(counts))
   stopifnot(is.data.frame(meta))
   stopifnot(genotype %in% colnames(meta))
   stopifnot(cell_column %in% colnames(meta))
   stopifnot(is.factor(meta[,genotype])|is.integer(meta[,genotype]))
+  stopifnot(is.null(genes) || is.data.frame(genes))
   # Check cat_covariates are factor)
   if(!is.null(cat_covariates)){
   stopifnot(
@@ -73,6 +75,10 @@ pseudobulk_additive_model <- function(counts, meta, genotype, cat_covariates = N
   if (!identical(rownames(counts), rownames(meta)))
     stop("Row names of counts must match row names of meta.")
   
+  if (!is.null(genes)){
+    if(!identical(colnames(counts), rownames(genes)))
+      stop("Col names of counts must match row names of genes.")
+  }
   
   if(is.null(cell_types)){
     cell_types <- unique(meta$cell_type)
@@ -94,8 +100,14 @@ pseudobulk_additive_model <- function(counts, meta, genotype, cat_covariates = N
       counts.ct <- counts[keep, ]
       meta.ct <- meta[keep, ]
       
-      dge <- DGEList(counts = t(counts.ct),
-                     samples = meta.ct)
+      if(!is.null(genes)){
+        dge <- DGEList(counts = t(counts.ct),
+                       samples = meta.ct,
+                       genes = genes)
+      }else{
+        dge <- DGEList(counts = t(counts.ct),
+                       samples = meta.ct)
+      }
       
       # remove NA
       dge <- dge[,which(!is.na(dge$samples[,genotype]))]
