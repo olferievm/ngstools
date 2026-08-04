@@ -173,8 +173,14 @@ pseudobulk_additive_model <- function(counts, meta, genes=NULL, genotype, cat_co
                              p.value = p_value_cutoff,
                              lfc = logFC_cutoff,
                              sort.by="P") %>%
-        as.data.frame() %>%
-        tibble::rownames_to_column(., var = 'gene_name') %>%
+        as.data.frame()
+       
+       if(!any(colnames(res) == 'gene_name')){
+           res <-    res %>%
+              tibble::rownames_to_column(., var = 'gene_name')
+       }
+       
+       res <- res %>%
         mutate(cell_type = cell_type) %>%
         dplyr::select(cell_type, gene_name, everything())
       cat("; nrows:",nrow(res),"\n")
