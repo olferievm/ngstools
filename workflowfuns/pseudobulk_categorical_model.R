@@ -146,9 +146,9 @@ pseudobulk_categorical_model <- function(counts, meta, genes=NULL, var, contrast
       
       keep.genes <- filterByExpr(dge,
                                  design = model.matrix(as.formula(f),
-                                                       dge$samples,
+                                                       dge$samples),
                                                        min.count = min.count,
-                                                       min.total.count = min.total.count))
+                                                       min.total.count = min.total.count)
       
       cat(' genes: ', sum(keep.genes))
       
