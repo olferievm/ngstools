@@ -52,7 +52,7 @@ pseudobulk_categorical_model <- function(counts, meta, genes=NULL, var, contrast
                                          cell_column = "cell_type", cell_types = NULL,
                                          min_samples = 50, 
                                          p_value_cutoff =1, logFC_cutoff=0,
-                                         min.total.count = 10,
+                                         min.count = 10,
                                          min.total.count = 100){
   
   stopifnot(is.matrix(counts) || is.data.frame(counts))
