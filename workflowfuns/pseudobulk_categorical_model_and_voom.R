@@ -47,13 +47,12 @@
 #' @export
 #' 
 
-pseudobulk_categorical_model <- function(counts, meta, genes=NULL, var, contrasts=NULL,
+pseudobulk_categorical_model_and_voom <- function(counts, meta, genes=NULL, var, contrasts=NULL,
                                          cat_covariates = NULL, num_covariates = NULL,
                                          cell_column = "cell_type", cell_types = NULL,
                                          min_samples = 50, 
                                          p_value_cutoff =1, logFC_cutoff=0,
-                                         min.total.count = 10,
-                                         min.total.count = 100){
+                                         min.count=10, min.total.count =100){
   
   stopifnot(is.matrix(counts) || is.data.frame(counts))
   stopifnot(is.data.frame(meta))
@@ -98,141 +97,153 @@ pseudobulk_categorical_model <- function(counts, meta, genes=NULL, var, contrast
     cat(' samples:', length(keep))
     
     if(length(keep) < min_samples){cat("Not enough samples\n");return(NULL)}
+    
+    counts.ct <- counts[keep, ]
+    meta.ct <- meta[keep, ]
+    
+    if(!is.null(genes)){
+      dge <- DGEList(counts = t(counts.ct),
+                     samples = meta.ct,
+                     genes = genes)
+    }else{
+      dge <- DGEList(counts = t(counts.ct),
+                     samples = meta.ct)
+    }
+    
+    # remove missing values
+    dge <- dge[,which(!is.na(dge$samples[,var]))]
+    # remove empty rows
+    dge <- dge[,which(dge$samples[,var] != "")]
+    
+    cat(' study var: ',var,', ', sep ="")
+    
+    dge$samples[,var] <- droplevels(factor(dge$samples[,var]))
+    
+    if (nlevels(dge$samples[,var]) < 2) {
+      message(cell_type, ": only one level is present.\n")
+      return(NULL)
+    }
+    
+    gc <- table(dge$samples[,var])
+    cat(paste(names(gc),gc, sep="="),sep=", ")
+    
+    f <- paste("~ 0 + ",var)
+    # Why we use only categorical variable for genes selection?
+    cat(" formula:",f)
+    
+    keep.genes <- filterByExpr(dge,
+                               design = model.matrix(as.formula(f),
+                                                     dge$samples,
+                                                     min.count = min.count,
+                                                     min.total.count = min.total.count))
+    
+    # Add categorical covariate variables.
+    if(!is.null(cat_covariates)){
+      for(p in cat_covariates){
+        f <- ifelse(levels(dge$samples[[p]]) > 1, paste(f, "+", p), f)
+      }}
+    
+    # Add numerical covariates variables.
+    if(!is.null(num_covariates)){
+      for(p in num_covariates){
+        f <- ifelse(length(unique(dge$samples[[p]])) > 1, paste(f, "+", p), f)
+      }}
+    
+    cat(" formula:",f)
+    
+    keep.genes <- filterByExpr(dge,
+                               design = model.matrix(as.formula(f),
+                                                     dge$samples,
+                                                     min.count = min.count,
+                                                     min.total.count = min.total.count))
+    
+    cat(' genes: ', sum(keep.genes))
+    
+    dge <- dge[keep.genes,,keep.lib.sizes=FALSE]
+    
+    dge <- normLibSizes(dge, method="TMM")
+    
+    dge$samples <- droplevels(dge$samples)
+    
+    
+    design <- model.matrix(as.formula(f), data= dge$samples)
+    
+    v <- voom(dge, design, plot=FALSE)
+    
+    fit <- lmFit(v, design)
+    
+    
+    if (is.null(contrasts)) {
       
-      counts.ct <- counts[keep, ]
-      meta.ct <- meta[keep, ]
+      coef.names <- colnames(design)
       
-      if(!is.null(genes)){
-        dge <- DGEList(counts = t(counts.ct),
-                       samples = meta.ct,
-                       genes = genes)
-      }else{
-        dge <- DGEList(counts = t(counts.ct),
-                       samples = meta.ct)
-      }
+      coef.names <- coef.names[
+        grepl(paste0("^", var), coef.names)
+      ]
       
-      # remove missing values
-      dge <- dge[,which(!is.na(dge$samples[,var]))]
-      # remove empty rows
-      dge <- dge[,which(dge$samples[,var] != "")]
-      
-      cat(' study var: ',var,', ', sep ="")
-      
-      dge$samples[,var] <- droplevels(factor(dge$samples[,var]))
-      
-      if (nlevels(dge$samples[,var]) < 2) {
-        message(cell_type, ": only one level is present.\n")
-        return(NULL)
-      }
-      
-      gc <- table(dge$samples[,var])
-      cat(paste(names(gc),gc, sep="="),sep=", ")
-      
-      f <- paste("~ 0 + ",var)
-      
-      # Add categorical covariate variables.
-      if(!is.null(cat_covariates)){
-        for(p in cat_covariates){
-          f <- ifelse(levels(dge$samples[[p]]) > 1, paste(f, "+", p), f)
-        }}
-      
-      # Add numerical covariates variables.
-      if(!is.null(num_covariates)){
-        for(p in num_covariates){
-          f <- ifelse(length(unique(dge$samples[[p]])) > 1, paste(f, "+", p), f)
-        }}
-      
-      cat(" formula:",f)
-      
-      keep.genes <- filterByExpr(dge,
-                                 design = model.matrix(as.formula(f),
-                                                       dge$samples,
-                                                       min.count = min.count,
-                                                       min.total.count = min.total.count))
-      
-      cat(' genes: ', sum(keep.genes))
-      
-      dge <- dge[keep.genes,,keep.lib.sizes=FALSE]
-      
-      dge <- normLibSizes(dge, method="TMM")
-      
-      dge$samples <- droplevels(dge$samples)
-      
-      
-      design <- model.matrix(as.formula(f), data= dge$samples)
-      
-      v <- voom(dge, design, plot=FALSE)
-      
-      fit <- lmFit(v, design)
-      
-      
-      if (is.null(contrasts)) {
-        
-        coef.names <- colnames(design)
-        
-        coef.names <- coef.names[
-          grepl(paste0("^", var), coef.names)
-        ]
-        
-        results <- lapply(coef.names, function(coef){
-          
-          res <- topTable(
-            fit,
-            coef = coef,
-            number = Inf,
-            p.value = p_value_cutoff,
-            lfc = logFC_cutoff,
-            sort.by = "P"
-          )
-          
-          if(!any(colnames(res) == "gene_name")){
-            res <- res |> tibble::rownames_to_column("gene_name") 
-          }
-          
-          res |>
-            dplyr::mutate(
-              cell_type = cell_type,
-              contrast = coef
-            )
-        })
-        
-      } else {
-        
-        contrast.matrix <- makeContrasts(
-          contrasts = contrasts,
-          levels = design
-        )
-        
-        fit <- contrasts.fit(fit, contrast.matrix)
-        fit <- eBayes(fit)
-        
-        results <- lapply(colnames(contrast.matrix), function(coef){
+      results <- lapply(coef.names, function(coef){
         
         res <- topTable(
-            fit,
-            coef = coef,
-            number = Inf,
-            p.value = p_value_cutoff,
-            lfc = logFC_cutoff,
-            sort.by = "P"
-          )
-          
-        res |>
-            tibble::rownames_to_column("gene_name") |>
-            dplyr::mutate(
-              cell_type = cell_type,
-              contrast = coef
-            )
-        })
+          fit,
+          coef = coef,
+          number = Inf,
+          p.value = p_value_cutoff,
+          lfc = logFC_cutoff,
+          sort.by = "P"
+        )
         
-      }
-      cat("...Done\n")
-      dplyr::bind_rows(results)
+        res |>
+          tibble::rownames_to_column("gene_name") |>
+          dplyr::mutate(
+            cell_type = cell_type,
+            contrast = coef
+          )
+      })
       
+    } else {
+      
+      contrast.matrix <- makeContrasts(
+        contrasts = contrasts,
+        levels = design
+      )
+      
+      fit <- contrasts.fit(fit, contrast.matrix)
+      fit <- eBayes(fit)
+      
+      results <- lapply(colnames(contrast.matrix), function(coef){
+        
+        res <- topTable(
+          fit,
+          coef = coef,
+          number = Inf,
+          p.value = p_value_cutoff,
+          lfc = logFC_cutoff,
+          sort.by = "P"
+        )
+        
+        if(!any(colnames(res) == "gene_name")){
+          res <- res |> tibble::rownames_to_column("gene_name") 
+        }
+        
+        res |>
+          dplyr::mutate(
+            cell_type = cell_type,
+            contrast = coef
+          )
+      })
+      
+    }
+    cat("...Done\n")
+    
+    list(voom = v, fit = dplyr::bind_rows(results))
+    
   })
   
+  # Failed to fit
   miss_out <- sapply(screen_cell_types,is.null)
-  screen_cell_types <- screen_cell_types[!miss_out]
-  screen_cell_types %>% dplyr::bind_rows()
+  
+  # Return lists of voom objects and associated top genes
+  screen_cell_types[!miss_out]
+  #screen_cell_types %>% dplyr::bind_rows()
   
 }
