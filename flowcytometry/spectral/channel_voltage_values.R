@@ -103,4 +103,3 @@ channel_voltage_values <- function(ff, channels = NULL) {
   out
 }
 
-channel_voltage_values(ff)
