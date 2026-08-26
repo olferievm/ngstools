@@ -31,7 +31,7 @@
 #'   clustering. Default is \code{5}.
 #'
 #' @return A data frame with one row for each detector and two columns,
-#'   \code{Neg} and \code{Pos}, containing the median fluorescence intensity
+#'   \code{Neg} and \code{Pos}, containing the median fluorescence intensity 
 #'   of the negative and positive bead populations, respectively. The
 #'   fluorescence values are calculated from the original, untransformed
 #'   expression matrix.
