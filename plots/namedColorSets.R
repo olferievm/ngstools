@@ -10,7 +10,7 @@ namedColorSets <- list(
     HD = "#172767",
     SLE = "#b80422"
   ),
-  set_HD_CTR = c(
+  set_CTR_SLE = c(
     CTR = "#172767",
     SLE = "#b80422"
   ),
