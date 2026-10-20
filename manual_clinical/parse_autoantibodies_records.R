@@ -9,7 +9,7 @@ parse_autoantibodies_records <- function(data, column = "autoantibodies") {
   # SSA → SSA52, SSA60
   
   # Preserve the distinction between a general test and a specific test.
-  
+  #      
   antibody_names <- c(
     "aCL", "aCL_IgA", "aCL_IgG", "aCL_IgM",
     "ANA", "ANCA", "cANCA", "pANCA", "anti-C3_IgG", "anti-Gliadin", "anti-P",
