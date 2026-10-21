@@ -45,18 +45,20 @@
                                          ylim = "auto",
                                          xlab = bquote(log[2]("FC")),
                                          ylab = bquote(-log[10]("Pvalue")),
-                                         max.overlaps = 10,
-                                         min.segment.length = 0,
-                                         arrow = NULL,
                                          pval_colname = "PValue",
                                          adjpval_colname = "FDR",
                                          smallestpval = 1e-15,
                                          fold_change_colname = "logFC",
                                          label_column = "gene_name",
+                                         foldchange_treshold_labels = NULL,
+                                         significance_treshold_labels = NULL,
+                                         max.overlaps = 10,
+                                         min.segment.length = 0,
+                                         arrow = NULL,
+                                         label_size = 3,
                                          color_scale = c("black", "orange"),
                                          point_size = 1.75,
                                          point_alpha = 0.5,
-                                         label_size = 3,
                                          max_points = 0) {
                   
                   # Convert TopTags
@@ -84,6 +86,7 @@
                   if (fold_change_colname != "logFC") top <- top %>% rename(logFC = !!sym(fold_change_colname))
                   if (pval_colname != "PValue") top <- top %>% rename(PValue = !!sym(pval_colname))
                   if (adjpval_colname != "FDR") top <- top %>% rename(FDR = !!sym(adjpval_colname))
+                
                   
                   # Column logic
                   pval_cutoff_colname <- ifelse(useAdjustedPvalueCutoff, "FDR", "PValue")
@@ -101,15 +104,22 @@
                     PValue = pmax(PValue, smallestpval),
                     FDR = pmax(FDR, smallestpval),
                   )
+
                   
                   # Axis limits
                   if (is.character(xlim) && xlim == "auto") {
-                    xmax <- ceiling(max(abs(top$logFC), na.rm = TRUE)) + 1
+                    xmax <- ceiling(max(abs(top$logFC), na.rm = TRUE) * 1.1)
+                  #  cat("actual logFC: ", xmax, "\n")
                     xlim <- c(-xmax, xmax)
                   }
                   if (is.character(ylim) && ylim == "auto") {
-                    actualpval <- ifelse(plotAdjustedPvalue, top$FDR, top$PValue)
-                    ymax <- ceiling(max(-log10(actualpval), na.rm = TRUE)) + 1
+                    # That usually equals smallestpval.
+                    actualpval <- ifelse(plotAdjustedPvalue,
+                                         min(top$FDR, na.rm = TRUE),
+                                         min(top$PValue, na.rm = TRUE))
+                   # cat("actual pval: ", actualpval,"\n")
+                    ymax <- ceiling(-log10(actualpval) * 1.1)
+                   # cat("actual ymax: ", ymax,"\n")
                     ylim <- c(0, ymax)
                   }
                   
@@ -126,10 +136,22 @@
                                                 (!!sym(pval_cutoff_colname)) < pval,
                                               signif_label, "Not Signif."))
                   
-                  # Subset sig genes for labels
-                  topnames <- filter(top, Threshold == signif_label)
+                  # Subset genes for labels...
+                  foldchange_treshold_labels <- ifelse(!is.null(foldchange_treshold_labels) & is.numeric(foldchange_treshold_labels),
+                                              foldchange_treshold_labels,
+                                              logFoldChange
+                                              )
+                  significance_treshold_labels <- ifelse(!is.null(significance_treshold_labels) & is.numeric(significance_treshold_labels),
+                                                  significance_treshold_labels,
+                                                  pval)
                   
-                  # Optional downsampling of background
+                  #cat("FC treshold labels:", foldchange_treshold_labels,"\n")
+                  #cat("Signif. treshold labels:", significance_treshold_labels,"\n")
+                  
+                  topnames <- filter(top,  abs(logFC) > foldchange_treshold_labels, 
+                                     !!sym(pval_cutoff_colname) < significance_treshold_labels)
+                  
+                  # Optional down sampling of background
                   if (is.numeric(max_points) && max_points > 0 && max_points < nrow(top)) {
                     top$pick <- FALSE
                     top$pick[sample(1:nrow(top), max_points)] <- TRUE
@@ -149,6 +171,7 @@
                   # if(is.null(xlab)){
                   #     xlab <- bquote(log[2](FC))
                   # }
+
                   
                   # Plot
                   g <- ggplot(top, aes(x = logFC,
