@@ -44,7 +44,7 @@ namedColorSets <- list(
   ),
   set2_Female_Male = c(
     Female = "#FC7409",
-    Male ="#0A343E",
+    Male ="#0A343E"
   ),
   set_FH_MH_FS_MS = c(
     FH = "#4DAF4A",
@@ -58,12 +58,18 @@ namedColorSets <- list(
     FS = "#FF7F00",
     MS = "#E41A1C"
   ),
-  set_serology1 = c(
+  set1_Serology = c(
     '+' = '#E41A1C',
     '+/-' = '#FF7F00',
     'low' = '#f3d567',
     '-' = '#246893',
     'NA' = '#dddddd'
+  ),
+  set2_Serology = c(
+    `-`="#172767",
+    `low`="#f3d567",
+    `+/-`="#ee9b43",
+    `+`="#b80422"
   ),
   set2_Renal = c(
     N="#0A343E",
@@ -84,5 +90,19 @@ namedColorSets <- list(
     `Native Americans`= "#F97B72FF",
     `Pacific Islander`="#80BA5AFF",
     `White`="#3969ACFF",
-    `Mix`="#E68310FF")
+    `Mix`="#E68310FF"),
+  set1_LowMedHigh <- c(
+    `Low`="#172767",
+    `Med`="#f3d567",
+    `High`="#b80422"
+  ),
+  set1_Quant = c(
+    `L1`="#172767",
+    `L2`="#19798b",
+    `L3`="#f3d567",
+    `L4`="#ee9b43",
+    `L5`="#e74b47",
+    `L6`="#b80422"
+  )
+
 )

@@ -12,20 +12,20 @@ parse_autoantibodies_records <- function(data, column = "autoantibodies") {
   #      
   antibody_names <- c(
     "aCL", "aCL_IgA", "aCL_IgG", "aCL_IgM",
-    "ANA", "ANCA", "cANCA", "pANCA", "anti-C3_IgG", "anti-Gliadin", "anti-P",
+    "ANA", "AMA", "ANCA", "cANCA", "pANCA", "anti-C3_IgG", "anti-Gliadin", "anti-P",
     "aPL", "ASCA", "ASLO", "ATA", "ATG",
     "b2GP1", "b2GP1_IgA", "b2GP1_IgG", "b2GP1_IgM",
     "C1q", "CCP", "Centromere", "Chromatin", "CMV_IgG", "CMV_IgM", "Cryoglobulin",
     "DAT", "DAT_COLD", "DAT_WARM", "DRVVT", "dsDNA", "ENA", "EMA_IgA",
     "F-actin", "FTA", "Jo1", "GBM", "Gliadin_IgA", "Gliadin_IgG",
     "HepB_SA", "HepC", "Histone",
-    "HLAB27", "hypergammaglobulinemia", "Ku",  "LAC", "Lyme", "MDA5",
-    "MPO", "Mi2", "Myocardial_Ab", "Mitochondrial", "Nxp2",  "pANCA",
+    "HLAB27", "hypergammaglobulinemia", "Ku",  "LAC", "Lyme", "LKM1", "MDA5",
+    "MPO", "Mi2", "Myocardial_Ab", "Mitochondrial", "Nxp2", "NMDAR", "pANCA",
     "Phosphotodylserine_IgG", "Phosphotodylserine_IgM",
     "PL7", "PL12","PR", "PR3", "RBP",
     "Reticulin", "Reticulin_IgA", "RF", "RibosomalP",
-    "RNAPol3", "RNP", "RPR", "SCL70", "Sm", "SmRNP", "SSA", "SSA52",
-    "SSA60", "SSB", "Srp", "OJ", "EJ", "TG", "TPO", "TTG", "Tif1y", "VDRL"
+    "RNAPol3", "RNP", "RPR", "SCL70", "SMA", "Sm", "SmRNP", "SSA", "SSA52",
+    "SSA60", "SSB", "Srp", "OJ", "EJ", "TG", "TPO", "TTG", "Tif1y", "VDRL", "JCV"
   )
   
  # "   Ku-; TG-; TPO-; Mi2-; PL12-; PL7-; Srp-; Jo1-; OJ-; EJ-; b2GP1_IgG-; b2GP1_IgM-; b2GP1_IgA-;  aCL_IgG-;   aCL_IgM-;  aCL_IgA-;";
