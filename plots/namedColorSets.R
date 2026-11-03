@@ -73,12 +73,13 @@ namedColorSets <- list(
   ),
   set2_Renal = c(
     N="#0A343E",
-    R="#FC7409"),
+    R="#FC7409"
+    ),
   set3_Renal = c(
     H="#F5D98A",
     N="#0A343E",
-    R="#FC7409"),
-  
+    R="#FC7409"
+    ),
   set_Abs = c(
     Neg = "#3969ACFF",
     Weak="#80BA5AFF",
@@ -90,7 +91,8 @@ namedColorSets <- list(
     `Native Americans`= "#F97B72FF",
     `Pacific Islander`="#80BA5AFF",
     `White`="#3969ACFF",
-    `Mix`="#E68310FF"),
+    `Mix`="#E68310FF"
+    ),
   set1_LowMedHigh <- c(
     `Low`="#172767",
     `Med`="#f3d567",
