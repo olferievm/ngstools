@@ -39,7 +39,7 @@ universal_gene_score <- function(x, genes, method = c("average", "pca","z-score"
     
   } else if (is.matrix(x)) {
     
-    matched_genes <- intersect(rownames(x), interferon_genes)
+    matched_genes <- intersect(rownames(x), genes)
     
     if (length(matched_genes) == 0) stop("No selected genes found. Abort.")
     if (anyDuplicated(matched_genes)) stop("Duplicated gene names found. Abort.")
